@@ -15,6 +15,7 @@ import android.widget.Toast;
 import com.alibaba.android.arouter.demo.testinject.TestObj;
 import com.alibaba.android.arouter.demo.testinject.TestParcelable;
 import com.alibaba.android.arouter.demo.testinject.TestSerializable;
+import com.alibaba.android.arouter.demo.testinterceptor.TestInterceptorTemporary;
 import com.alibaba.android.arouter.demo.testservice.HelloService;
 import com.alibaba.android.arouter.demo.testservice.SingleService;
 import com.alibaba.android.arouter.facade.Postcard;
@@ -111,6 +112,25 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case R.id.interceptor:
                 ARouter.getInstance()
                         .build("/test/activity4")
+                        .navigation(this, new NavCallback() {
+                            @Override
+                            public void onArrival(Postcard postcard) {
+
+                            }
+
+                            @Override
+                            public void onInterrupt(Postcard postcard) {
+                                Log.d("ARouter", "被拦截了");
+                            }
+                        });
+                break;
+            case R.id.temporary_interceptor:
+                ARouter.getInstance()
+                        .build("/test/activity4")
+                        //本次路由禁用所有全局拦截器
+                        .greenChannel()
+                        //为本次路由添加临时拦截器
+                        .withInterceptor(new TestInterceptorTemporary())
                         .navigation(this, new NavCallback() {
                             @Override
                             public void onArrival(Postcard postcard) {
