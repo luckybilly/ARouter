@@ -14,11 +14,13 @@ import android.util.SparseArray;
 import com.alibaba.android.arouter.facade.callback.NavigationCallback;
 import com.alibaba.android.arouter.facade.model.RouteMeta;
 import com.alibaba.android.arouter.facade.service.SerializationService;
+import com.alibaba.android.arouter.facade.template.IInterceptorTemporary;
 import com.alibaba.android.arouter.facade.template.IProvider;
 import com.alibaba.android.arouter.launcher.ARouter;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * A container that contains the roadmap.
@@ -42,6 +44,11 @@ public final class Postcard extends RouteMeta {
     private Bundle optionsCompat;    // The transition animation of activity
     private int enterAnim = -1;
     private int exitAnim = -1;
+    private List<IInterceptorTemporary> interceptorTemporaries;
+
+    public List<IInterceptorTemporary> getInterceptorTemporaries() {
+        return interceptorTemporaries;
+    }
 
     public Bundle getOptionsBundle() {
         return optionsCompat;
@@ -575,6 +582,25 @@ public final class Postcard extends RouteMeta {
         return this;
     }
 
+    /**
+     * Add a temporary Interceptor
+     * @param interceptor a interceptor implements IInterceptorTemporary
+     * @return this
+     * @author billy.qi <a href="mailto:qiyilike@163.com">Contact me.</a>
+     * @since 2019-03-05
+     */
+    public Postcard withInterceptor(IInterceptorTemporary interceptor) {
+        if (interceptor != null) {
+            if (interceptorTemporaries == null) {
+                interceptorTemporaries = new ArrayList<>();
+            }
+            if (!interceptorTemporaries.contains(interceptor)) {
+                interceptorTemporaries.add(interceptor);
+            }
+        }
+        return this;
+    }
+
     @Override
     public String toString() {
         return "Postcard{" +
@@ -588,6 +614,7 @@ public final class Postcard extends RouteMeta {
                 ", optionsCompat=" + optionsCompat +
                 ", enterAnim=" + enterAnim +
                 ", exitAnim=" + exitAnim +
+                ", interceptors=" + interceptorTemporaries +
                 "}\n" +
                 super.toString();
     }

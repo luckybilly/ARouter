@@ -309,7 +309,8 @@ final class _ARouter {
             callback.onFound(postcard);
         }
 
-        if (!postcard.isGreenChannel()) {   // It must be run in async thread, maybe interceptor cost too mush time made ANR.
+        if (!postcard.isGreenChannel() || postcard.getInterceptorTemporaries() != null) {
+            // It must be run in async thread, maybe interceptor cost too mush time made ANR.
             interceptorService.doInterceptions(postcard, new InterceptorCallback() {
                 /**
                  * Continue process

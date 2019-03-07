@@ -8,9 +8,12 @@ import com.alibaba.android.arouter.facade.annotation.Route;
 import com.alibaba.android.arouter.facade.callback.InterceptorCallback;
 import com.alibaba.android.arouter.facade.service.InterceptorService;
 import com.alibaba.android.arouter.facade.template.IInterceptor;
+import com.alibaba.android.arouter.facade.template.IInterceptorTemporary;
 import com.alibaba.android.arouter.thread.CancelableCountDownLatch;
 import com.alibaba.android.arouter.utils.MapUtils;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -31,7 +34,22 @@ public class InterceptorServiceImpl implements InterceptorService {
 
     @Override
     public void doInterceptions(final Postcard postcard, final InterceptorCallback callback) {
-        if (null != Warehouse.interceptors && Warehouse.interceptors.size() > 0) {
+        // billy.qi modify start (2019-03-05)
+        final List<IInterceptor> interceptors;
+        List<IInterceptorTemporary> temporaryList = postcard.getInterceptorTemporaries();
+        if (temporaryList != null) {
+            // IInterceptorTemporary will process before IInterceptor
+            interceptors = new ArrayList<>();
+            interceptors.addAll(temporaryList);
+            if (Warehouse.interceptors != null) {
+                interceptors.addAll(Warehouse.interceptors);
+            }
+        } else {
+            interceptors = Warehouse.interceptors;
+        }
+        // billy.qi modify end (2019-03-05)
+
+        if (interceptors != null && !interceptors.isEmpty()) {
 
             checkInterceptorsInitStatus();
 
@@ -43,9 +61,9 @@ public class InterceptorServiceImpl implements InterceptorService {
             LogisticsCenter.executor.execute(new Runnable() {
                 @Override
                 public void run() {
-                    CancelableCountDownLatch interceptorCounter = new CancelableCountDownLatch(Warehouse.interceptors.size());
+                    CancelableCountDownLatch interceptorCounter = new CancelableCountDownLatch(interceptors.size());
                     try {
-                        _excute(0, interceptorCounter, postcard);
+                        _excute(0, interceptorCounter, postcard, interceptors);
                         interceptorCounter.await(postcard.getTimeout(), TimeUnit.SECONDS);
                         if (interceptorCounter.getCount() > 0) {    // Cancel the navigation this time, if it hasn't return anythings.
                             callback.onInterrupt(new HandlerException("The interceptor processing timed out."));
@@ -66,20 +84,20 @@ public class InterceptorServiceImpl implements InterceptorService {
 
     /**
      * Excute interceptor
-     *
-     * @param index    current interceptor index
+     *  @param index    current interceptor index
      * @param counter  interceptor counter
      * @param postcard routeMeta
+     * @param interceptors temporary and global interceptors
      */
-    private static void _excute(final int index, final CancelableCountDownLatch counter, final Postcard postcard) {
-        if (index < Warehouse.interceptors.size()) {
-            IInterceptor iInterceptor = Warehouse.interceptors.get(index);
+    private static void _excute(final int index, final CancelableCountDownLatch counter, final Postcard postcard, final List<IInterceptor> interceptors) {
+        if (index < interceptors.size()) {
+            IInterceptor iInterceptor = interceptors.get(index);
             iInterceptor.process(postcard, new InterceptorCallback() {
                 @Override
                 public void onContinue(Postcard postcard) {
                     // Last interceptor excute over with no exception.
                     counter.countDown();
-                    _excute(index + 1, counter, postcard);  // When counter is down, it will be execute continue ,but index bigger than interceptors size, then U know.
+                    _excute(index + 1, counter, postcard, interceptors);  // When counter is down, it will be execute continue ,but index bigger than interceptors size, then U know.
                 }
 
                 @Override
