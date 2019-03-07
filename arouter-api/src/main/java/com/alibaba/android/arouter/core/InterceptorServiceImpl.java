@@ -63,7 +63,7 @@ public class InterceptorServiceImpl implements InterceptorService {
                 public void run() {
                     CancelableCountDownLatch interceptorCounter = new CancelableCountDownLatch(interceptors.size());
                     try {
-                        _excute(0, interceptorCounter, postcard, interceptors);
+                        _execute(0, interceptorCounter, postcard, interceptors);
                         interceptorCounter.await(postcard.getTimeout(), TimeUnit.SECONDS);
                         if (interceptorCounter.getCount() > 0) {    // Cancel the navigation this time, if it hasn't return anythings.
                             callback.onInterrupt(new HandlerException("The interceptor processing timed out."));
@@ -89,7 +89,7 @@ public class InterceptorServiceImpl implements InterceptorService {
      * @param postcard routeMeta
      * @param interceptors temporary and global interceptors
      */
-    private static void _excute(final int index, final CancelableCountDownLatch counter, final Postcard postcard, final List<IInterceptor> interceptors) {
+    private static void _execute(final int index, final CancelableCountDownLatch counter, final Postcard postcard, final List<IInterceptor> interceptors) {
         if (index < interceptors.size()) {
             IInterceptor iInterceptor = interceptors.get(index);
             iInterceptor.process(postcard, new InterceptorCallback() {
@@ -97,7 +97,7 @@ public class InterceptorServiceImpl implements InterceptorService {
                 public void onContinue(Postcard postcard) {
                     // Last interceptor excute over with no exception.
                     counter.countDown();
-                    _excute(index + 1, counter, postcard, interceptors);  // When counter is down, it will be execute continue ,but index bigger than interceptors size, then U know.
+                    _execute(index + 1, counter, postcard, interceptors);  // When counter is down, it will be execute continue ,but index bigger than interceptors size, then U know.
                 }
 
                 @Override

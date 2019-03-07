@@ -17,7 +17,7 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.CLASS)
 public @interface Interceptor {
     /**
-     * The priority of interceptor, ARouter will be excute them follow the priority.
+     * The priority of interceptor, ARouter will execute them follow the priority.
      */
     int priority();
 
